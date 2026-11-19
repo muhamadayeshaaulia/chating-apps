@@ -1,4 +1,3 @@
-// Model untuk Profil Pengguna
 class UserProfile {
   final String id;
   final String username;
@@ -27,7 +26,6 @@ class UserProfile {
   }
 }
 
-// Model untuk Ruang Obrolan (Bisa 1-on-1 maupun Group)
 class ChatRoom {
   final String id;
   final String type; // 'direct' atau 'group'
@@ -60,7 +58,6 @@ class ChatRoom {
   }
 }
 
-// Model untuk Anggota Room
 class RoomMember {
   final String id;
   final String roomId;
@@ -87,7 +84,6 @@ class RoomMember {
   }
 }
 
-// Model untuk Pesan
 class ChatMessage {
   final String id;
   final String roomId;
