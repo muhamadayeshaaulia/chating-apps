@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../home/presentation/screens/home_screen.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/repositories/auth_repository.dart';
-import 'phone_login_screen.dart';
+import 'login_screen.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -25,7 +25,7 @@ class AuthGate extends StatelessWidget {
           return HomeScreen(user: snapshot.data!);
         }
 
-        return const PhoneLoginScreen();
+        return const LoginScreen();
       },
     );
   }
