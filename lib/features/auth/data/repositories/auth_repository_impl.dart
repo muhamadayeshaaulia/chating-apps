@@ -1,18 +1,24 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../domain/repositories/auth_repository.dart';
 
-class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final SupabaseClient _supabase = Supabase.instance.client;
+class AuthRepositoryImpl implements AuthRepository {
+  final FirebaseAuth _auth;
+  final SupabaseClient? _supabase;
 
-  /// Stream untuk memantau status login pengguna
+  AuthRepositoryImpl({FirebaseAuth? auth, SupabaseClient? supabase})
+      : _auth = auth ?? FirebaseAuth.instance,
+        _supabase = supabase ??
+            (Supabase.instance.isInitialized ? Supabase.instance.client : null);
+
+  @override
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  /// Mendapatkan data pengguna yang sedang login saat ini
+  @override
   User? get currentUser => _auth.currentUser;
 
-  /// Mengirim kode OTP ke nomor telepon yang diinput
+  @override
   Future<void> sendOtp({
     required String phoneNumber,
     required Function(String verificationId) onCodeSent,
@@ -24,12 +30,11 @@ class AuthService {
         phoneNumber: phoneNumber,
         timeout: const Duration(seconds: 60),
         verificationCompleted: (PhoneAuthCredential credential) async {
-          // Terjadi jika Android otomatis membaca SMS (Instant Verification)
           if (onAutoVerify != null) {
             onAutoVerify(credential);
           } else {
-            await _auth.signInWithCredential(credential);
-            await _syncProfileToSupabase(_auth.currentUser);
+            final userCredential = await _auth.signInWithCredential(credential);
+            await _syncProfileToSupabase(userCredential.user);
           }
         },
         verificationFailed: (FirebaseAuthException e) {
@@ -48,7 +53,7 @@ class AuthService {
     }
   }
 
-  /// Memverifikasi kode OTP yang diinput pengguna
+  @override
   Future<UserCredential> verifyOtp({
     required String verificationId,
     required String smsCode,
@@ -59,16 +64,13 @@ class AuthService {
     );
 
     final userCredential = await _auth.signInWithCredential(credential);
-
-    // Sinkronkan data pengguna Firebase ke tabel profiles di Supabase
     await _syncProfileToSupabase(userCredential.user);
 
     return userCredential;
   }
 
-  /// Menyimpan / memperbarui profil pengguna di Supabase
   Future<void> _syncProfileToSupabase(User? user) async {
-    if (user == null) return;
+    if (user == null || _supabase == null) return;
 
     try {
       await _supabase.from('profiles').upsert({
@@ -80,7 +82,7 @@ class AuthService {
     }
   }
 
-  /// Logout dari aplikasi
+  @override
   Future<void> signOut() async {
     await _auth.signOut();
   }
